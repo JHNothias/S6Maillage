@@ -56,4 +56,10 @@ __doc__ ="""
 - sortPointsX: sorts an array of points according to their X-coordinate
 - sortPointsY: sorts an array of points according to their Y-coordinate
 
+# Lattice for a square
+- genTri: generates a single triangle, in the form of a tuple of points.
+    `x` and `y` are the coordinates of the triangle in a square integer grid.
+    ``isBottom`` defines if the triangle is over (0) or under (1) its hypotenuse.
+- sqlattice: gives a uniform triangulation of a square whose lower left corner is at (0,0) and whose upper right corner is at (`x`, `y`).
+
 """
