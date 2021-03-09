@@ -14,7 +14,7 @@ def getRandomPoints(n=100, rangex = 1., rangey = 1.): return point(np.arange(0,n
 def point(keys, pos): return glue(keys,pos)
 def triangle(keys, pointkeys): return glue(keys, pointkeys)
 def points2seg(keys1, keys2): return glue(keys1, keys2)
-def tri2seg(tris): return {tris[0][n] : {(tris[1+a][n], tris[1+a+b][n]) for a in range(2) for b in range(1, 3-a)} for n in range(tris.shape[1])}
+def tri2seg(tris): return tris[0], glue(tris[1], tris[2]), glue(tris[1], tris[3]), glue(tris[2], tris[3])
 def seg2tri(keys, seg1, seg2, seg3): return triangle(keys, np.array([np.fromiter((x for x in set(p)), int) for p in glue([seg1,seg2,seg3]).reshape(1,6)]).T)
 
 # Graph stuff
@@ -26,8 +26,18 @@ def sortPointsX(points): return points[:, points[1].argsort()]
 def sortPointsY(points): return points[:, points[2].argsort()]
 
 # Lattice for a square
-def genTri(x,y,isBottom): return ((x,y),(x+1,y),(x,y+1)) if isBottom else ((x,y+1),(x+1,y),(x+1,y+1))
-def sqlattice(X,Y): return {genTri(x,y,isBottom) for x in range(X) for y in range(Y) for isBottom in range(2)}
+def pIn(x,y, Y): return x*Y + y
+def pX(t, Y): return (abs(t) - (abs(t)%Y))//Y
+def pY(t, Y): return abs(t)%Y
+def genSquareTri(X, Y):
+    Points = np.array([[x,y] for x in range(X+1) for y in range(Y+1)])
+    Tris = glue(
+        np.array([[pIn(pX(t, Y), pY(t, Y)+1, Y+1), pIn(pX(t, Y)+1, pY(t, Y)+1, Y+1), pIn(pX(t, Y)+1, pY(t, Y), Y+1)]
+        if t >= 0 else
+        [pIn(pX(t, Y), pY(t, Y), Y+1), pIn(pX(t, Y), pY(t, Y)+1, Y+1), pIn(pX(t, Y)+1, pY(t, Y), Y+1)]
+        for t in range(-X*Y+1, X*Y)]),
+        [0, 1, Y+1])
+    return Points[:,0], Points[:,1], np.array(Tris)
 
 
 
@@ -45,7 +55,7 @@ __doc__ ="""
 - point [V]: given a key and a position (vertical vector) returns [key, x, y]^t
 - triangle [V]: given a key and a set of 3 point keys returns [key, p1, p2, p3]^t
 - points2seg [V]: given two point keys returns [p1, p2]^t
-- tri2seg [V]: given an array of triangles returns the dict of the form of triangleKey : setOfSegments
+- tri2seg [V]: inverse of seg2tri
 - seg2tri [V]: given an array of keys and a 3 arrays of adjacent segments returns the corresponding array of triangles
 
 ## Graph stuff
@@ -57,9 +67,7 @@ __doc__ ="""
 - sortPointsY: sorts an array of points according to their Y-coordinate
 
 # Lattice for a square
-- genTri: generates a single triangle, in the form of a tuple of points.
-    `x` and `y` are the coordinates of the triangle in a square integer grid.
-    ``isBottom`` defines if the triangle is over (0) or under (1) its hypotenuse.
-- sqlattice: gives a uniform triangulation of a square whose lower left corner is at (0,0) and whose upper right corner is at (`x`, `y`).
+- genSquareTri: gives a uniform triangulation of a rectangle whose lower left corner is at (0,0) and whose upper right corner is at (`X`, `Y`).
+    (uses a neat modulo trick)
 
 """
